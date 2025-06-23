@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #a7b6ff, #5e7bff);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 25px; /* Kurangi padding */
+            border-radius: 12px; /* Sedikit lebih kecil */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* Bayangan lebih tipis */
+            text-align: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 18px; /* Kurangi margin */
+            font-size: 2em; /* Ukuran judul lebih kecil */
+            font-weight: 700;
+        }
+
+        #status {
+            font-size: 1.1em; /* Ukuran teks status lebih kecil */
+            color: #444;
+            margin-bottom: 18px; /* Kurangi margin */
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 80px); /* Ukuran cell lebih kecil: 80px */
+            grid-template-rows: repeat(3, 80px); /* Ukuran cell lebih kecil: 80px */
+            gap: 6px; /* Jarak antar cell lebih kecil */
+            margin: 0 auto 20px; /* Kurangi margin bawah */
+            width: 252px; /* (3*80px) + (2*6px gaps) = 240 + 12 = 252px */
+            height: 252px;
+            background-color: #f5f5f5;
+            border: 3px solid #ccddee; /* Border papan lebih tipis */
+            border-radius: 8px; /* Lebih kecil */
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .cell {
+            width: 80px; /* Ukuran cell disesuaikan */
+            height: 80px; /* Ukuran cell disesuaikan */
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em; /* Ukuran X/O disesuaikan */
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid #e0e0e0; /* Border cell lebih tipis */
+            border-radius: 6px; /* Sudut membulat pada cell */
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03); /* Bayangan lebih tipis */
+        }
+
+        .cell:hover:not(.X):not(.O) {
+            background-color: #eef;
+            transform: scale(1.05);
+        }
+
+        .cell.X {
+            color: #ff5722;
+            text-shadow: 1px 1px 3px rgba(255, 87, 34, 0.2);
+            background-color: #ffe0b2;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .cell.O {
+            color: #2196f3;
+            text-shadow: 1px 1px 3px rgba(33, 150, 243, 0.2);
+            background-color: #bbdefb;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        #restartButton {
+            padding: 10px 20px; /* Padding lebih kecil */
+            font-size: 1em; /* Ukuran font lebih kecil */
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px; /* Lebih kecil */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #restartButton:hover {
+            background-color: #45a049;
+            transform: translateY(-1px); /* Efek naik lebih kecil */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        #restartButton:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        <div id="status">Player X's Turn</div>
+        <div class="game-board" id="gameBoard">
+            <div class="cell" data-cell-index="0"></div>
+            <div class="cell" data-cell-index="1"></div>
+            <div class="cell" data-cell-index="2"></div>
+            <div class="cell" data-cell-index="3"></div>
+            <div class="cell" data-cell-index="4"></div>
+            <div class="cell" data-cell-index="5"></div>
+            <div class="cell" data-cell-index="6"></div>
+            <div class="cell" data-cell-index="7"></div>
+            <div class="cell" data-cell-index="8"></div>
+        </div>
+        <button id="restartButton">Restart Game</button>
+    </div>
+
+    <script>
+        const gameBoard = document.getElementById('gameBoard');
+        const cells = document.querySelectorAll('.cell');
+        const statusDisplay = document.getElementById('status');
+        const restartButton = document.getElementById('restartButton');
+
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let board = ['', '', '', '', '', '', '', '', '']; // Represents the state of the 9 cells
+
+        const winningConditions = [
+            [0, 1, 2], // Rows
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6], // Columns
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8], // Diagonals
+            [2, 4, 6]
+        ];
+
+        // Function to handle a cell click
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
+
+            // If the cell is already filled or the game is inactive, do nothing
+            if (board[clickedCellIndex] !== '' || !gameActive) {
+                return;
+            }
+
+            // Update the board and the cell's content
+            board[clickedCellIndex] = currentPlayer;
+            clickedCell.textContent = currentPlayer;
+            clickedCell.classList.add(currentPlayer); // Add class for styling (X or O color)
+
+            // Check for win or draw
+            checkResult();
+        }
+
+        // Function to check if there's a winner or a draw
+        function checkResult() {
+            let roundWon = false;
+
+            for (let i = 0; i < winningConditions.length; i++) {
+                const winCondition = winningConditions[i];
+                let a = board[winCondition[0]];
+                let b = board[winCondition[1]];
+                let c = board[winCondition[2]];
+
+                if (a === '' || b === '' || c === '') {
+                    continue; // Skip if any cell in the condition is empty
+                }
+                if (a === b && b === c) {
+                    roundWon = true;
+                    break; // Found a winner
+                }
+            }
+
+            if (roundWon) {
+                statusDisplay.textContent = `Player ${currentPlayer} Wins!`;
+                gameActive = false; // End the game
+                return;
+            }
+
+            // Check for draw (if all cells are filled and no winner)
+            let roundDraw = !board.includes('');
+            if (roundDraw) {
+                statusDisplay.textContent = `It's a Draw!`;
+                gameActive = false; // End the game
+                return;
+            }
+
+            // If no win or draw, switch to the next player
+            switchPlayer();
+        }
+
+        // Function to switch between players
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            statusDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+        }
+
+        // Function to restart the game
+        function restartGame() {
+            currentPlayer = 'X';
+            gameActive = true;
+            board = ['', '', '', '', '', '', '', '', ''];
+            statusDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('X', 'O'); // Remove X/O styling classes
+            });
+        }
+
+        // Event Listeners
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        restartButton.addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
